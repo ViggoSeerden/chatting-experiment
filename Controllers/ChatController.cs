@@ -1,24 +1,44 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Net.WebSockets;
+using System.Text;
 
-namespace chatexperiment.Controllers
+namespace chatexperiment
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("/chat")]
     public class ChatController : ControllerBase
     {
         private Chat[] chats;
-
-        private readonly ILogger<ChatController> _logger;
-
-        public ChatController(ILogger<ChatController> logger)
+        
+        [HttpGet("/ws")]
+        public async Task Get()
         {
-            _logger = logger;
+            if (HttpContext.WebSockets.IsWebSocketRequest)
+            {
+                using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+                await HandleWebSocketConnection(webSocket);
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = 400;
+            }
         }
 
-        [HttpGet(Name = "GetChats")]
-        public IEnumerable<Chat> Get()
+        private async Task HandleWebSocketConnection(WebSocket webSocket)
         {
-            return null;
+            var buffer = new byte[1024 * 4];
+            WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            
+            while (!result.CloseStatus.HasValue)
+            {
+                // Echo the message back to the client
+                var serverMsg = Encoding.UTF8.GetBytes($"Server: You said '{Encoding.UTF8.GetString(buffer, 0, result.Count)}'");
+                await webSocket.SendAsync(new ArraySegment<byte>(serverMsg, 0, serverMsg.Length), result.MessageType, result.EndOfMessage, CancellationToken.None);
+
+                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            }
+
+            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
         }
     }
 }
