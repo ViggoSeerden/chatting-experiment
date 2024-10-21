@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "oQHA08r1vQYrIn2W40xQYPw2YdiRBxMtEssKnkd2Np1D3KFaxp+RjRcpzWUDeEyCDOz8Y/MmbwylIPjzCXX/fA==",
+  "dgSpecHash": "8z3g45EZnlcAlqz1KwHkiDl4wMShaermbWBWCtQaFlCFeA7ZFsiiu5V8qpkAUhFgH2l4FL+Dehv0jedaK3O2Tw==",
   "success": true,
   "projectFilePath": "C:\\Users\\oggiv\\source\\repos\\chatexperiment\\chatexperiment\\chatexperiment.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\oggiv\\.nuget\\packages\\microsoft.extensions.apidescription.server\\3.0.0\\microsoft.extensions.apidescription.server.3.0.0.nupkg.sha512",
     "C:\\Users\\oggiv\\.nuget\\packages\\microsoft.openapi\\1.2.3\\microsoft.openapi.1.2.3.nupkg.sha512",
+    "C:\\Users\\oggiv\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
     "C:\\Users\\oggiv\\.nuget\\packages\\swashbuckle.aspnetcore\\6.2.3\\swashbuckle.aspnetcore.6.2.3.nupkg.sha512",
     "C:\\Users\\oggiv\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.2.3\\swashbuckle.aspnetcore.swagger.6.2.3.nupkg.sha512",
     "C:\\Users\\oggiv\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.2.3\\swashbuckle.aspnetcore.swaggergen.6.2.3.nupkg.sha512",

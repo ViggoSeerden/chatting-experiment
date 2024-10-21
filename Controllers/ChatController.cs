@@ -1,44 +1,61 @@
-using Microsoft.AspNetCore.Mvc;
 using System.Net.WebSockets;
 using System.Text;
+using chatexperiment.Models;
+using chatexperiment.Services;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
-namespace chatexperiment
+namespace chatexperiment.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class ChatController : ControllerBase
 {
-    [ApiController]
-    [Route("/chat")]
-    public class ChatController : ControllerBase
+    private readonly ChatWebSocketManager _chatManager;
+
+    public ChatController(ChatWebSocketManager chatManager)
     {
-        private Chat[] chats;
-        
-        [HttpGet("/ws")]
-        public async Task Get()
-        {
-            if (HttpContext.WebSockets.IsWebSocketRequest)
-            {
-                using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                await HandleWebSocketConnection(webSocket);
-            }
-            else
-            {
-                HttpContext.Response.StatusCode = 400;
-            }
-        }
+        _chatManager = chatManager;
+    }
 
-        private async Task HandleWebSocketConnection(WebSocket webSocket)
+    [HttpGet("/ws")]
+    public async Task Get(int userId)
+    {
+        if (HttpContext.WebSockets.IsWebSocketRequest)
         {
-            var buffer = new byte[1024 * 4];
-            WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+            using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+            _chatManager.AddConnection(userId, webSocket);
+
+            await HandleWebSocketConnection(userId, webSocket);
+        }
+        else
+        {
+            HttpContext.Response.StatusCode = 400;
+        }
+    }
+
+    private async Task HandleWebSocketConnection(int userId, WebSocket webSocket)
+    {
+        var buffer = new byte[1024 * 4];
+        WebSocketReceiveResult result;
+
+        while ((result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None)).CloseStatus == null)
+        {
+            var messageContent = Encoding.UTF8.GetString(buffer, 0, result.Count);
+            var message = JsonConvert.DeserializeObject<Message>(messageContent);
             
-            while (!result.CloseStatus.HasValue)
+            _chatManager.AddMessageToChat(1, message);
+            
+            foreach (var connection in _chatManager.Connections)
             {
-                // Echo the message back to the client
-                var serverMsg = Encoding.UTF8.GetBytes($"Server: You said '{Encoding.UTF8.GetString(buffer, 0, result.Count)}'");
-                await webSocket.SendAsync(new ArraySegment<byte>(serverMsg, 0, serverMsg.Length), result.MessageType, result.EndOfMessage, CancellationToken.None);
-
-                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                if (connection.Key != userId)
+                {
+                    await _chatManager.SendMessageAsync(connection.Key, messageContent);
+                }
             }
-
-            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
         }
+
+        await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+        _chatManager.RemoveConnection(userId);
     }
 }
